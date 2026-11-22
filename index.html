@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="description" content="Pampliset — digital library, math solver and web snapshot timeline." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Pampliset</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@700&display=swap');
+    :root { --bg:#f4f1ea; --panel:#fffdf8; --ink:#1a1d21; --muted:#747a82; --accent:#f0a44b; --line:#ddd8ce; --green:#426b57; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:'DM Sans',system-ui,sans-serif; color:var(--ink); background:var(--bg); }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    .shell { min-height:100vh; max-width:1180px; margin:auto; display:grid; grid-template-columns:220px 1fr; }
+    aside { position:sticky; top:0; height:100vh; padding:28px 20px; border-right:1px solid var(--line); background:rgba(255,253,248,.7); }
+    .brand { display:flex; align-items:center; gap:10px; font-family:'Libre Baskerville',Georgia,serif; font-size:22px; margin-bottom:38px; }
+    .brand-mark { width:34px; height:34px; border-radius:50%; background:var(--ink); color:white; display:grid; place-items:center; font-size:18px; }
+    nav { display:flex; flex-direction:column; gap:8px; }
+    nav button { border:0; background:transparent; text-align:left; padding:12px 14px; border-radius:12px; color:var(--muted); }
+    nav button.active { background:#ebe6da; color:var(--ink); font-weight:700; }
+    main { min-width:0; padding:34px 44px 60px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
+    h1,h2,h3 { margin-top:0; }
+    h1 { font-family:'Libre Baskerville',Georgia,serif; font-size:38px; letter-spacing:-1.5px; }
+    .install { border:0; border-radius:999px; background:var(--ink); color:white; padding:11px 16px; display:none; }
+    .search-row { display:grid; grid-template-columns:1fr 150px; gap:10px; margin-bottom:24px; }
+    input,select { width:100%; border:1px solid var(--line); background:white; border-radius:12px; padding:13px 14px; outline:none; }
+    input:focus,select:focus { border-color:var(--accent); }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; min-height:185px; display:flex; flex-direction:column; }
+    .tag { align-self:flex-start; font-size:12px; font-weight:700; border-radius:999px; background:#edf1e8; color:var(--green); padding:5px 9px; }
+    .card h3 { margin:22px 0 8px; line-height:1.25; }
+    .card p { color:var(--muted); margin:0; font-size:14px; }
+    .card button { margin-top:auto; border:0; background:transparent; padding:12px 0 0; text-align:left; font-weight:700; }
+    .view { display:none; }
+    .view.active { display:block; }
+    .solver { max-width:760px; }
+    .solver-box { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:22px; }
+    .solver-controls { display:grid; grid-template-columns:1fr auto; gap:10px; }
+    .primary { border:0; border-radius:12px; background:var(--ink); color:white; padding:12px 18px; }
+    .answer { margin-top:18px; border-radius:12px; background:#eef1e8; padding:16px; min-height:54px; }
+    .timeline { max-width:760px; border-left:2px solid var(--line); margin-left:10px; padding-left:30px; }
+    .snapshot { position:relative; background:var(--panel); border:1px solid var(--line); border-radius:15px; padding:18px; margin:0 0 18px; }
+    .snapshot:before { content:''; position:absolute; left:-38px; top:21px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:3px solid var(--bg); }
+    .snapshot time { color:var(--muted); font-size:13px; }
+    .snapshot h3 { margin:8px 0 5px; }
+    .ask { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .ask button { border:1px solid var(--line); background:white; border-radius:999px; padding:9px 12px; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translate(-50%,80px); background:var(--ink); color:white; border-radius:12px; padding:12px 16px; opacity:0; transition:.25s; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
+    @media (max-width:800px) { .shell { display:block; } aside { height:auto; position:relative; border-right:0; border-bottom:1px solid var(--line); padding:14px 16px; } .brand { margin-bottom:12px; } nav { flex-direction:row; overflow:auto; } nav button { white-space:nowrap; } main { padding:24px 16px 80px; } h1 { font-size:31px; } .cards { grid-template-columns:1fr; } .search-row { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand"><span class="brand-mark">P</span> Pampliset</div>
+      <nav aria-label="Main navigation">
+        <button class="active" data-view="library">Library</button>
+        <button data-view="solver">Math solver</button>
+        <button data-view="timeline">Timeline</button>
+      </nav>
+    </aside>
+    <main>
+      <div class="topbar"><h1 id="pageTitle">Library</h1><button id="installButton" class="install">Install app</button></div>
+
+      <section id="library" class="view active">
+        <div class="search-row"><input id="search" type="search" placeholder="Search books and articles…" aria-label="Search library" /><select id="category"><option value="all">All subjects</option><option>Science</option><option>History</option><option>Literature</option><option>Mathematics</option></select></div>
+        <div class="cards" id="cards"></div>
+      </section>
+
+      <section id="solver" class="view">
+        <div class="solver"><h2>Solve a calculation</h2><div class="solver-box"><div class="solver-controls"><input id="equation" placeholder="Try: 2 + 2 * 6 or sqrt(81)" /><button id="solve" class="primary">Solve</button></div><div id="answer" class="answer">Enter an expression to begin.</div></div></div>
+      </section>
+
+      <section id="timeline" class="view">
+        <h2>Web snapshot timeline</h2><div class="timeline" id="timelineList"></div>
+      </section>
+
+      <section id="ask">
+        <h2>Ask Pampliset</h2><p>AI features need a secure server-side API connection.</p><div class="ask"><button data-subject="Science">Science</button><button data-subject="History">History</button><button data-subject="Literature">Literature</button><button data-subject="Mathematics">Mathematics</button></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    const library = [
+      {title:'The Shape of Space',category:'Science',text:'Explore geometry, dimensions and the structure of the universe.'},
+      {title:'A Brief Atlas of Ideas',category:'History',text:'A visual journey through inventions that changed daily life.'},
+      {title:'Poetry of the Quiet Earth',category:'Literature',text:'Selected poems about nature, memory and belonging.'},
+      {title:'Thinking in Numbers',category:'Mathematics',text:'Patterns, proofs and practical ways to understand numbers.'},
+      {title:'The Living Planet',category:'Science',text:'An introduction to ecosystems and biological diversity.'},
+      {title:'Pages from the Past',category:'History',text:'Stories hidden in letters, maps and old newspapers.'}
+    ];
+    const cards=document.getElementById('cards'), search=document.getElementById('search'), category=document.getElementById('category');
+    function render() { const q=search.value.toLowerCase(); cards.innerHTML=library.filter(b=>(category.value==='all'||b.category===category.value)&&(`${b.title} ${b.text} ${b.category}`.toLowerCase().includes(q))).map(b=>`<article class="card"><span class="tag">${b.category}</span><h3>${b.title}</h3><p>${b.text}</p><button onclick="toast('This sample library item has no linked file.')">View sample →</button></article>`).join('')||'<p>No matching library items.</p>'; }
+    search.oninput=render; category.onchange=render; render();
+
+    document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.view).classList.add('active');document.getElementById('pageTitle').textContent=btn.textContent;});
+
+    function toast(text){const t=document.getElementById('toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2600);} 
+
+    document.getElementById('solve').onclick=()=>{const expression=document.getElementById('equation').value.trim(); if(!expression){toast('Enter an expression first.');return;} const safe=/^[0-9+\-*/().\s,sqrtpixa-zA-Z]+$/i.test(expression)&&!/;|constructor|prototype|__proto__/i.test(expression); if(!safe){document.getElementById('answer').textContent='Please use numbers and basic mathematical operators.';return;} try{let e=expression.replace(/sqrt\s*\(([^()]+)\)/gi,'Math.sqrt($1)').replace(/pi/gi,'Math.PI').replace(/\^/g,'**');if(/[^0-9+\-*/().,%\sMathPIsqrta-z]/i.test(e))throw Error();const result=Function('"use strict"; return ('+e+')')();document.getElementById('answer').textContent=Number.isFinite(result)?`Result: ${result}`:'The expression does not produce a finite number.';}catch{document.getElementById('answer').textContent='Could not understand that expression.';}};
+
+    const snapshots=[{date:'2026-03-14','title':'Pampliset Archive','text':'A web snapshot storing the first public version of the library.'},{date:'2025-09-02','title':'Research Index','text':'Snapshot of a research index with mathematics and science collections.'},{date:'2024-11-18','title':'Community Reading Room','text':'An early reading room page and community recommendations.'}];
+    document.getElementById('timelineList').innerHTML=snapshots.map(s=>`<article class="snapshot"><time>${s.date}</time><h3>${s.title}</h3><p>${s.text}</p></article>`).join('');
+    document.querySelectorAll('[data-subject]').forEach(b=>b.onclick=()=>toast(`AI for ${b.dataset.subject} needs a server-side API connection.`));
+
+    let deferredPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installButton').style.display='block';});document.getElementById('installButton').onclick=async()=>{if(!deferredPrompt)return toast('Use your browser menu to install the app.');deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;document.getElementById('installButton').style.display='none';};
+    if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  </script>
+</body>
+</html>
